@@ -3,12 +3,11 @@ package main
 import (
   "fmt"
   "strings"
-  "os"
-  "io/fs"
   "regexp"
+  "os"
+  "path"
   "github.com/go-resty/resty/v2"
   "github.com/gocolly/colly/v2"
-  "slices"
 )
 
 type ApiResult struct {
@@ -32,7 +31,7 @@ func main () {
   // handle API info
   // can get unauthenticated of main docket info
   COURT_LISTENER_API := "https://www.courtlistener.com/api/rest/v3/dockets/"
-
+  downloadDir := findUserFolder("Downloads")
   //fmt.Println(API_HEADER)
 
   fmt.Println(os.Args)
@@ -86,7 +85,9 @@ func main () {
 
   fmt.Println("************** download PDFs from Internet Archive ***************")
 
-  c := colly.NewCollector()
+  c := colly.NewCollector(
+  )
+
 
   c.OnRequest(func(r *colly.Request) {
     fmt.Println("Visiting", r.URL)
@@ -106,8 +107,8 @@ func main () {
 
     fmt.Println(fileName)
     fmt.Println(fileExtension)
-
-    r.Save(fileName)
+    
+    r.Save(path.Join(downloadDir, fileName))
 
   })
 
@@ -124,7 +125,7 @@ func main () {
 
 
 
-func findUserFolder(targetDirName string) {
+func findUserFolder(targetDirName string) string {
   // this function will be used to find the directory of name *name* within the user's
   // home directory on *nix and Windows. Supported directorys are "Downloads", "Documents", "Pictutres",
   // "Movies", etc.
@@ -139,74 +140,6 @@ func findUserFolder(targetDirName string) {
     os.Exit(1)
   } 
 
-  userDirsStructs, err := fs.ReadDir(userHomeDir)
+ return path.Join(userHomeDir, targetDirName)
 
-  var targetDirIndex int
-
-  targetDirNameSingular := strings.TrimRight(targetDirName, 1)
-  targetDirNamePlural := targetDirName + "s"
-
-  userDirs := map(userDirsStructs, func (dir) {dir.Name})
-
-  switch { 
-  case slices.Index(userDirs, targetDirName) > -1:
-    targetDirIndex = slices.Index(userDirs, targetDirName) 
-
-  case slices.Index(userDirs, strings.ToLower(targetDirName)) > -1:
-    targetDirIndex = slices.Index(userDirs, strings.ToLower(targetDirName)) 
-
-  case slices.Index(userDirs, strings.ToUpper(targetDirName)) > -1:
-    targetDirIndex = slices.Index(userDirs, strings.ToUpper(targetDirName)) 
-
-    // using deprecated call to Title. Hopefully the experimental text package's cases method will 
-    // help
-  case slices.Index(userDirs, strings.Title(targetDirName)) > -1:
-    targetDirIndex = slices.Index(userDirs, strings.Title(targetDirName)) 
-
-    // with targetDirNamePlural 
-  case slices.Index(userDirs, targetDirNamePlural) > -1:
-    targetDirIndex = slices.Index(userDirs, targetDirNamePlural) 
-
-  case slices.Index(userDirs, strings.ToLower(targetDirNamePlural)) > -1:
-    targetDirIndex = slices.Index(userDirs, strings.ToLower(targetDirNamePlural)) 
-
-  case slices.Index(userDirs, strings.ToUpper(targetDirNamePlural)) > -1:
-    targetDirIndex = slices.Index(userDirs, strings.ToUpper(targetDirNamePlural)) 
-
-    // using deprecated call to Title. Hopefully the experimental text package's cases method will 
-    // help
-  case slices.Index(userDirs, strings.Title(targetDirNamePlural)) > -1:
-    targetDirIndex = slices.Index(userDirs, strings.Title(targetDirNamePlural))
-
-    // with targetDirNameSingular 
-  case slices.Index(userDirs, targetDirNameSingular) > -1:
-    targetDirIndex = slices.Index(userDirs, targetDirNameSingular) 
-
-  case slices.Index(userDirs, strings.ToLower(targetDirNameSinglular)) > -1:
-    targetDirIndex = slices.Index(userDirs, strings.ToLower(targetDirNameSingular)) 
-
-  case slices.Index(userDirs, strings.ToUpper(targetDirNameSingular)) > -1:
-    targetDirIndex = slices.Index(userDirs, strings.ToUpper(targetDirNameSingular)) 
-
-    // using deprecated call to Title. Hopefully the experimental text package's cases method will 
-    // help
-  case slices.Index(userDirs, strings.Title(targetDirNameSingular)) > -1:
-    targetDirIndex = slices.Index(userDirs, strings.Title(targetDirNameSingular)) 
-  default:
-    targetDirIndex = -1
-  }
-
-  if targetDirIndex > -1 {
-    return path.join(userHomeDir, userDirsStructs[targetDirIndex].Name)
-  }
-
-
- return userHomeDir
-
-}
-
-func findUserFolderWithCallback(name string, callback string) {
-  return callback
-  // eventually add a WithCallback function that fires a callback in lieu of failure, easily used to trigger 
-  // user input of some kind or to failover to a temporary directory.
 }
