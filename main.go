@@ -6,6 +6,7 @@ import (
   "regexp"
   "os"
   "path"
+  "slices"
   "github.com/go-resty/resty/v2"
   "github.com/gocolly/colly/v2"
 )
@@ -34,17 +35,17 @@ func main () {
   downloadDir := findUserFolder("Downloads")
   //fmt.Println(API_HEADER)
 
-  fmt.Println(os.Args)
+  // fmt.Println(os.Args)
   var case_spec, case_id string
 
   switch {
     case len(os.Args) > 1: {
 
-      fmt.Println("Reading case id from parameter")
+      // fmt.Println("Reading case id from parameter")
       case_spec = os.Args[1]
     }
     default: {
-      fmt.Print("Enter case id or url: ")
+      fmt.Print("Enter the case's courtlistener.com url: ")
       fmt.Scanln(&case_spec)
     }
 
@@ -55,7 +56,7 @@ func main () {
   re := regexp.MustCompile(`\d+`)
   case_id = re.FindString(case_spec)
 
-  fmt.Println("Searching CourtListener API for", case_id)
+  fmt.Println("Searching CourtListener API ...")
 
 
   // Create REST client
@@ -73,24 +74,37 @@ func main () {
   resp.Status()
 
   if err != nil {
-    fmt.Println("error: ", err)
-    os.Exit(1)
+    fmt.Println("Error, couldn't find the case.")
+    os.Exit(0)
   } 
 
-  fmt.Println(resp.Result())
+  if caseData.CaseName == "" {
+    fmt.Println("Case not found")
+    os.Exit(0)
+  } 
 
 
-  caseYear := caseData.DateFiled[2:4]
+  var caseYear string
+
+  if caseData.DateFiled != "" {
+    caseYear = caseDatate -output recap_downloader_universal recap_downloader_arm64 recap_downloader_amd64
+    :!
+    .DateFiled[2:4]
+  } else {
+    fmt.Println("Sorry, getting back invalid case data")
+    os.Exit(1)
+  }
 
 
-  fmt.Println("************** download PDFs from Internet Archive ***************")
+  fmt.Println("Found", caseData.CaseName)
+  fmt.Println("************** Downloading available PDFs/media from the Internet Archive ***************")
 
   c := colly.NewCollector(
   )
 
 
   c.OnRequest(func(r *colly.Request) {
-    fmt.Println("Visiting", r.URL)
+    fmt.Print(".")
   })
 
   c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -104,11 +118,12 @@ func main () {
 
     dotArray := strings.Split(url, ".")
     fileExtension := dotArray[len(dotArray) -1]
+    junkFileTypes := []string{ "sqlite", "sql", "torrent" }
 
-    fmt.Println(fileName)
-    fmt.Println(fileExtension)
-    
-    r.Save(path.Join(downloadDir, fileName))
+    if slices.Index(junkFileTypes, fileExtension) == -1 {
+      r.Save(path.Join(downloadDir, fileName))
+    }
+
 
   })
 
