@@ -1,3 +1,11 @@
+### Installation
+
+- [Windows version](https://github.com/lathropd/recap-downloader/raw/main/bin/recap_downloader.exe) 
+- [MacOS universal binary](https://github.com/lathropd/recap-downloader/raw/main/bin/recap_downloader_universal)
+
+
+#### MacOS issue
+
 Because this code is not developer signed for MacOS, your security permissions may not allow you to run the binaries on MacOS 
 without administrator permissions.
 
